@@ -2,175 +2,132 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <!-- モバイル対応のための viewport 設定 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>チンチロゲーム（音声付き・大きいサイコロ表示）</title>
+  <title>3D サイコロ</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding-top: 30px;
-      background-color: #f0f0f0;
-      margin: 0;
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    .button-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
     }
-    /* サイコロの表示を大きくする */
-    .dice {
-      font-size: 150px;  /* 以前の 100px より大きく設定 */
-      margin: 10px;
-      display: inline-block;
-    }
-    /* rolling クラスで回転アニメーション */
-    .rolling {
-      animation: roll 1s linear infinite;
-    }
-    @keyframes roll {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .result {
-      font-size: 24px;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    button {
-      font-size: 24px;
-      padding: 10px 20px;
-      cursor: pointer;
-      margin: 10px;
-    }
-    /* 履歴欄のスタイル（変更はなし） */
-    #historyContainer {
-      margin-top: 30px;
-      text-align: left;
-      display: inline-block;
-      background-color: #fff;
-      padding: 10px;
-      border-radius: 5px;
-      width: 90%;
-      max-width: 600px;
-    }
-    #historyContainer h2 {
+    .roll-button {
       font-size: 20px;
-      margin-bottom: 10px;
-    }
-    #history {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    #history li {
-      padding: 5px 0;
-      border-bottom: 1px solid #ddd;
-      font-size: 32px;
-    }
-    /* モバイル用の調整 */
-    @media (max-width: 600px) {
-      .dice {
-        font-size: 120px;
-      }
-      button {
-        font-size: 20px;
-        padding: 8px 16px;
-      }
-      .result {
-        font-size: 20px;
-      }
+      padding: 12px 24px;
+      background: white;
+      border: 2px solid black;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>チンチロゲーム（音声付き・大きいサイコロ表示）</h1>
-  
-  <!-- サイコロの表示エリア -->
-  <div id="diceArea">
-    <span id="die1" class="dice">⚀</span>
-    <span id="die2" class="dice">⚀</span>
-    <span id="die3" class="dice">⚀</span>
-  </div>
-  
-  <!-- 結果表示（最終的なサイコロの目のみ出力） -->
-  <div class="result" id="result"></div>
-  
-  <!-- サイコロを振るボタン -->
-  <button onclick="rollDice()">サイコロを振る</button>
-  
-  <!-- 過去の結果の履歴欄 -->
-  <div id="historyContainer">
-    <h2>過去の結果</h2>
-    <ul id="history"></ul>
-  </div>
-  
-  <script>
-    function rollDice() {
-      // サイコロを転がす音を再生（同一ディレクトリに dice-roll.mp3 を配置）
-      var diceSound = new Audio('dice-roll.mp3');
-      diceSound.play();
 
-      // Unicode のサイコロ文字（⚀～⚅）
-      var diceUnicode = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
-      
-      // DOM 要素の取得
-      var die1Elem = document.getElementById("die1");
-      var die2Elem = document.getElementById("die2");
-      var die3Elem = document.getElementById("die3");
-      var resultElem = document.getElementById("result");
-      var historyElem = document.getElementById("history");
-      var button = document.querySelector("button");
-      
-      // ボタンを無効化（連打防止）
-      button.disabled = true;
-      resultElem.textContent = "";
-      
-      // サイコロに回転アニメーションを追加
-      die1Elem.classList.add("rolling");
-      die2Elem.classList.add("rolling");
-      die3Elem.classList.add("rolling");
-      
-      // アニメーション中は 50ms ごとにサイコロの面をランダムに更新
-      var animationInterval = setInterval(function() {
-        var randomDie1 = Math.floor(Math.random() * 6) + 1;
-        var randomDie2 = Math.floor(Math.random() * 6) + 1;
-        var randomDie3 = Math.floor(Math.random() * 6) + 1;
-        die1Elem.textContent = diceUnicode[randomDie1 - 1];
-        die2Elem.textContent = diceUnicode[randomDie2 - 1];
-        die3Elem.textContent = diceUnicode[randomDie3 - 1];
-      }, 50);
-      
-      // 1秒後にアニメーションを停止し、最終的な結果を表示
-      setTimeout(function() {
-        clearInterval(animationInterval);
-        // アニメーション用クラスを除去
-        die1Elem.classList.remove("rolling");
-        die2Elem.classList.remove("rolling");
-        die3Elem.classList.remove("rolling");
-        
-        // 最終的なサイコロの値を決定
-        var finalDie1 = Math.floor(Math.random() * 6) + 1;
-        var finalDie2 = Math.floor(Math.random() * 6) + 1;
-        var finalDie3 = Math.floor(Math.random() * 6) + 1;
-        
-        // 各サイコロの最終結果を表示
-        die1Elem.textContent = diceUnicode[finalDie1 - 1];
-        die2Elem.textContent = diceUnicode[finalDie2 - 1];
-        die3Elem.textContent = diceUnicode[finalDie3 - 1];
-        
-        // 最終結果の文字列を作成
-        var finalDiceResult = diceUnicode[finalDie1 - 1] + " " +
-                              diceUnicode[finalDie2 - 1] + " " +
-                              diceUnicode[finalDie3 - 1];
-                              
-        // 結果欄に最終結果を表示
-        resultElem.textContent = finalDiceResult;
-        
-        // 履歴に今回の結果を記録（最新が上に表示）
-        var historyItem = document.createElement("li");
-        historyItem.textContent = finalDiceResult;
-        historyElem.insertBefore(historyItem, historyElem.firstChild);
-        
-        // ボタンを再度有効化
-        button.disabled = false;
-      }, 1000);  // 1秒後に最終結果を確定
+  <div class="button-container">
+    <button class="roll-button" onclick="rollDice()">サイコロを振る</button>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js";
+    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/controls/OrbitControls.js";
+    import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es";
+
+    // シーン、カメラ、レンダラーの設定
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 照明（リアルな影を作る）
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 10, 5);
+    scene.add(light);
+
+    // 物理エンジン（Cannon.js）
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0); // 重力を適用
+
+    // 床（物理）
+    const groundBody = new CANNON.Body({
+      type: CANNON.Body.STATIC,
+      shape: new CANNON.Plane(),
+    });
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
+
+    // 床（3D）
+    const groundGeometry = new THREE.PlaneGeometry(10, 10);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    groundMesh.rotation.x = -Math.PI / 2;
+    scene.add(groundMesh);
+
+    // サイコロ（物理オブジェクト）
+    const diceBody = new CANNON.Body({
+      mass: 1,
+      shape: new CANNON.Box(new CANNON.Vec3(1, 1, 1)),
+      position: new CANNON.Vec3(0, 5, 0),
+    });
+    world.addBody(diceBody);
+
+    // サイコロのテクスチャ
+    const loader = new THREE.TextureLoader();
+    const diceMaterials = [
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/OxD5w1T.png') }), // 1
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/QG1WbDr.png') }), // 2
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/Mt2W8B3.png') }), // 3
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/XKOETf7.png') }), // 4
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/TkCXAxF.png') }), // 5
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/NpJnHWS.png') }), // 6
+    ];
+
+    // サイコロ（3Dオブジェクト）
+    const diceGeometry = new THREE.BoxGeometry(2, 2, 2);
+    const diceMesh = new THREE.Mesh(diceGeometry, diceMaterials);
+    scene.add(diceMesh);
+
+    // カメラの操作（マウスで視点を動かせる）
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    // サイコロの音
+    const diceSound = new Audio('dice-roll.mp3');
+
+    // アニメーションループ
+    function animate() {
+      requestAnimationFrame(animate);
+      world.step(1 / 60);
+
+      // 物理エンジンのサイコロ位置を3Dオブジェクトに適用
+      diceMesh.position.copy(diceBody.position);
+      diceMesh.quaternion.copy(diceBody.quaternion);
+
+      renderer.render(scene, camera);
     }
+    animate();
+
+    // サイコロを振る処理
+    window.rollDice = function() {
+      // ランダムな方向にサイコロを投げる
+      diceBody.velocity.set(Math.random() * 10 - 5, 5, Math.random() * 10 - 5);
+      diceBody.angularVelocity.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+
+      // 音を鳴らす
+      diceSound.play();
+    };
+
+    // ウィンドウリサイズ対応
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
   </script>
 </body>
 </html>
