@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D サイコロ</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+    canvas { display: block; }
+    .button-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .roll-button {
+      font-size: 20px;
+      padding: 12px 24px;
+      background: white;
+      border: 2px solid black;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="button-container">
+    <button class="roll-button" onclick="rollDice()">サイコロを振る</button>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js";
+    import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.132.2/examples/jsm/controls/OrbitControls.js";
+    import * as CANNON from "https://cdn.jsdelivr.net/npm/cannon-es";
+
+    // シーン、カメラ、レンダラーの設定
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 照明（リアルな影を作る）
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 10, 5);
+    scene.add(light);
+
+    // 物理エンジン（Cannon.js）
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0); // 重力を適用
+
+    // 床（物理）
+    const groundBody = new CANNON.Body({
+      type: CANNON.Body.STATIC,
+      shape: new CANNON.Plane(),
+    });
+    groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(groundBody);
+
+    // 床（3D）
+    const groundGeometry = new THREE.PlaneGeometry(10, 10);
+    const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+    const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    groundMesh.rotation.x = -Math.PI / 2;
+    scene.add(groundMesh);
+
+    // サイコロ（物理オブジェクト）
+    const diceBody = new CANNON.Body({
+      mass: 1,
+      shape: new CANNON.Box(new CANNON.Vec3(1, 1, 1)),
+      position: new CANNON.Vec3(0, 5, 0),
+    });
+    world.addBody(diceBody);
+
+    // サイコロのテクスチャ
+    const loader = new THREE.TextureLoader();
+    const diceMaterials = [
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/OxD5w1T.png') }), // 1
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/QG1WbDr.png') }), // 2
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/Mt2W8B3.png') }), // 3
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/XKOETf7.png') }), // 4
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/TkCXAxF.png') }), // 5
+      new THREE.MeshStandardMaterial({ map: loader.load('https://i.imgur.com/NpJnHWS.png') }), // 6
+    ];
+
+    // サイコロ（3Dオブジェクト）
+    const diceGeometry = new THREE.BoxGeometry(2, 2, 2);
+    const diceMesh = new THREE.Mesh(diceGeometry, diceMaterials);
+    scene.add(diceMesh);
+
+    // カメラの操作（マウスで視点を動かせる）
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    // サイコロの音
+    const diceSound = new Audio('dice-roll.mp3');
+
+    // アニメーションループ
+    function animate() {
+      requestAnimationFrame(animate);
+      world.step(1 / 60);
+
+      // 物理エンジンのサイコロ位置を3Dオブジェクトに適用
+      diceMesh.position.copy(diceBody.position);
+      diceMesh.quaternion.copy(diceBody.quaternion);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // サイコロを振る処理
+    window.rollDice = function() {
+      // ランダムな方向にサイコロを投げる
+      diceBody.velocity.set(Math.random() * 10 - 5, 5, Math.random() * 10 - 5);
+      diceBody.angularVelocity.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+
+      // 音を鳴らす
+      diceSound.play();
+    };
+
+    // ウィンドウリサイズ対応
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+  </script>
+</body>
+</html>
