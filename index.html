@@ -4,20 +4,38 @@
   <meta charset="UTF-8">
   <!-- モバイル対応のための viewport 設定 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>チンチロゲーム（音声付き・大きいサイコロ表示）</title>
+  <title>チンチロゲーム（拡張版）</title>
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
-      padding-top: 30px;
+      padding-top: 20px;
       background-color: #f0f0f0;
       margin: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    h1 {
+      color: #4a4a4a;
+      margin-bottom: 20px;
     }
     /* サイコロの表示を大きくする */
+    .dice-container {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
     .dice {
-      font-size: 150px;  /* 以前の 100px より大きく設定 */
+      font-size: 150px;
       margin: 10px;
       display: inline-block;
+      transition: transform 0.3s ease;
     }
     /* rolling クラスで回転アニメーション */
     .rolling {
@@ -29,81 +47,334 @@
     }
     .result {
       font-size: 24px;
-      margin-top: 20px;
+      margin: 20px 0;
       font-weight: bold;
+      min-height: 30px;
+    }
+    .yaku-name {
+      color: #e74c3c;
+      font-size: 28px;
+      font-weight: bold;
+      min-height: 40px;
+      margin-bottom: 10px;
     }
     button {
-      font-size: 24px;
-      padding: 10px 20px;
+      font-size: 22px;
+      padding: 12px 24px;
       cursor: pointer;
       margin: 10px;
-    }
-    /* 履歴欄のスタイル（変更はなし） */
-    #historyContainer {
-      margin-top: 30px;
-      text-align: left;
-      display: inline-block;
-      background-color: #fff;
-      padding: 10px;
+      background-color: #3498db;
+      color: white;
+      border: none;
       border-radius: 5px;
-      width: 90%;
-      max-width: 600px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+    /* 操作パネル */
+    .control-panel {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    /* 得点と設定パネル */
+    .score-settings-panel {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .score-panel, .settings-panel {
+      background-color: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      min-width: 200px;
+    }
+    .score-panel h3, .settings-panel h3 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    /* 履歴欄のスタイル */
+    #historyContainer {
+      margin-top: 20px;
+      text-align: left;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      width: 100%;
     }
     #historyContainer h2 {
       font-size: 20px;
       margin-bottom: 10px;
+      color: #2c3e50;
     }
     #history {
       list-style: none;
       padding: 0;
       margin: 0;
+      max-height: 300px;
+      overflow-y: auto;
     }
     #history li {
-      padding: 5px 0;
-      border-bottom: 1px solid #ddd;
-      font-size: 32px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #history li:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+    /* 役一覧テーブル */
+    .yaku-list {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .yaku-list th, .yaku-list td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .yaku-list th {
+      background-color: #3498db;
+      color: white;
+    }
+    .yaku-list tr:last-child td {
+      border-bottom: none;
     }
     /* モバイル用の調整 */
     @media (max-width: 600px) {
       .dice {
-        font-size: 120px;
+        font-size: 100px;
+        margin: 5px;
       }
       button {
-        font-size: 20px;
-        padding: 8px 16px;
+        font-size: 18px;
+        padding: 10px 18px;
       }
-      .result {
+      .result, .yaku-name {
         font-size: 20px;
       }
+      .score-settings-panel {
+        flex-direction: column;
+      }
+    }
+    /* アニメーション用 */
+    @keyframes highlight {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .highlight {
+      animation: highlight 0.5s ease;
+    }
+    /* 音量スライダー */
+    .volume-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .volume-control label {
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>チンチロゲーム（音声付き・大きいサイコロ表示）</h1>
-  
-  <!-- サイコロの表示エリア -->
-  <div id="diceArea">
-    <span id="die1" class="dice">⚀</span>
-    <span id="die2" class="dice">⚀</span>
-    <span id="die3" class="dice">⚀</span>
-  </div>
-  
-  <!-- 結果表示（最終的なサイコロの目のみ出力） -->
-  <div class="result" id="result"></div>
-  
-  <!-- サイコロを振るボタン -->
-  <button onclick="rollDice()">サイコロを振る</button>
-  
-  <!-- 過去の結果の履歴欄 -->
-  <div id="historyContainer">
-    <h2>過去の結果</h2>
-    <ul id="history"></ul>
+  <div class="container">
+    <h1>チンチロゲーム（拡張版）</h1>
+    
+    <!-- サイコロの表示エリア -->
+    <div class="dice-container">
+      <div id="diceArea">
+        <span id="die1" class="dice">⚀</span>
+        <span id="die2" class="dice">⚀</span>
+        <span id="die3" class="dice">⚀</span>
+      </div>
+      
+      <!-- 役の名前表示 -->
+      <div class="yaku-name" id="yakuName"></div>
+      
+      <!-- 結果表示 -->
+      <div class="result" id="result"></div>
+    </div>
+    
+    <!-- 得点と設定パネル -->
+    <div class="score-settings-panel">
+      <!-- 得点表示パネル -->
+      <div class="score-panel">
+        <h3>現在の得点</h3>
+        <p id="currentScore">0 点</p>
+        <h3>最高得点</h3>
+        <p id="highScore">0 点</p>
+      </div>
+      
+      <!-- 設定パネル -->
+      <div class="settings-panel">
+        <h3>設定</h3>
+        <!-- 音量コントロール -->
+        <div class="volume-control">
+          <label for="volumeControl">音量:</label>
+          <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+        </div>
+        <!-- サイコロの速度設定 -->
+        <div class="volume-control">
+          <label for="speedControl">速度:</label>
+          <input type="range" id="speedControl" min="500" max="2000" step="100" value="1000">
+        </div>
+      </div>
+    </div>
+    
+    <!-- 操作パネル -->
+    <div class="control-panel">
+      <button id="rollButton" onclick="rollDice()">サイコロを振る</button>
+      <button id="resetButton" onclick="resetGame()">リセット</button>
+    </div>
+    
+    <!-- 過去の結果の履歴欄 -->
+    <div id="historyContainer">
+      <h2>過去の結果</h2>
+      <ul id="history"></ul>
+    </div>
+    
+    <!-- 役一覧テーブル -->
+    <table class="yaku-list">
+      <thead>
+        <tr>
+          <th>役</th>
+          <th>説明</th>
+          <th>点数</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ピンゾロ</td>
+          <td>1-1-1</td>
+          <td>5点</td>
+        </tr>
+        <tr>
+          <td>アラシ</td>
+          <td>同じ目が3つ（1-1-1以外）</td>
+          <td>3点</td>
+        </tr>
+        <tr>
+          <td>シゴロ</td>
+          <td>4-5-6</td>
+          <td>2点</td>
+        </tr>
+        <tr>
+          <td>ヒフミ</td>
+          <td>1-2-3</td>
+          <td>-2点</td>
+        </tr>
+        <tr>
+          <td>役なし（目）</td>
+          <td>同じ目が2つ</td>
+          <td>その目の点数</td>
+        </tr>
+        <tr>
+          <td>役なし（出目なし）</td>
+          <td>上記以外</td>
+          <td>0点</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   
   <script>
+    // 変数の初期化
+    let currentScore = 0;
+    let highScore = 0;
+    let volume = 0.5;
+    let rollSpeed = 1000;
+    
+    // ローカルストレージからデータを読み込み
+    function loadDataFromStorage() {
+      if (localStorage.getItem('chinchiroHighScore')) {
+        highScore = parseInt(localStorage.getItem('chinchiroHighScore'));
+        document.getElementById('highScore').textContent = highScore + ' 点';
+      }
+      
+      if (localStorage.getItem('chinchiroVolume')) {
+        volume = parseFloat(localStorage.getItem('chinchiroVolume'));
+        document.getElementById('volumeControl').value = volume;
+      }
+      
+      if (localStorage.getItem('chinchiroSpeed')) {
+        rollSpeed = parseInt(localStorage.getItem('chinchiroSpeed'));
+        document.getElementById('speedControl').value = rollSpeed;
+      }
+    }
+    
+    // 音量コントロールのイベントリスナー
+    document.getElementById('volumeControl').addEventListener('change', function(e) {
+      volume = parseFloat(e.target.value);
+      localStorage.setItem('chinchiroVolume', volume);
+    });
+    
+    // 速度コントロールのイベントリスナー
+    document.getElementById('speedControl').addEventListener('change', function(e) {
+      rollSpeed = parseInt(e.target.value);
+      localStorage.setItem('chinchiroSpeed', rollSpeed);
+    });
+    
+    // 役の判定と点数計算
+    function evaluateYaku(die1, die2, die3) {
+      // 出目を昇順にソート
+      let sortedDice = [die1, die2, die3].sort((a, b) => a - b);
+      
+      // ピンゾロ (1-1-1)
+      if (die1 === 1 && die2 === 1 && die3 === 1) {
+        return { name: "ピンゾロ", score: 5 };
+      }
+      
+      // アラシ (同じ目が3つ、ピンゾロ以外)
+      if (die1 === die2 && die2 === die3) {
+        return { name: `アラシ (${die1})`, score: 3 };
+      }
+      
+      // シゴロ (4-5-6)
+      if (sortedDice[0] === 4 && sortedDice[1] === 5 && sortedDice[2] === 6) {
+        return { name: "シゴロ", score: 2 };
+      }
+      
+      // ヒフミ (1-2-3)
+      if (sortedDice[0] === 1 && sortedDice[1] === 2 && sortedDice[2] === 3) {
+        return { name: "ヒフミ", score: -2 };
+      }
+      
+      // 目（同じ目が2つ）
+      if (die1 === die2 || die2 === die3 || die1 === die3) {
+        let pairValue;
+        if (die1 === die2) pairValue = die1;
+        else if (die2 === die3) pairValue = die2;
+        else pairValue = die1;
+        
+        return { name: `目 (${pairValue})`, score: pairValue };
+      }
+      
+      // 役なし
+      return { name: "役なし", score: 0 };
+    }
+    
     function rollDice() {
-      // サイコロを転がす音を再生（同一ディレクトリに dice-roll.mp3 を配置）
+      // サイコロを転がす音を再生
       var diceSound = new Audio('dice-roll.mp3');
+      diceSound.volume = volume;
       diceSound.play();
 
       // Unicode のサイコロ文字（⚀～⚅）
@@ -114,12 +385,14 @@
       var die2Elem = document.getElementById("die2");
       var die3Elem = document.getElementById("die3");
       var resultElem = document.getElementById("result");
+      var yakuNameElem = document.getElementById("yakuName");
       var historyElem = document.getElementById("history");
-      var button = document.querySelector("button");
+      var button = document.getElementById("rollButton");
       
       // ボタンを無効化（連打防止）
       button.disabled = true;
       resultElem.textContent = "";
+      yakuNameElem.textContent = "";
       
       // サイコロに回転アニメーションを追加
       die1Elem.classList.add("rolling");
@@ -136,7 +409,7 @@
         die3Elem.textContent = diceUnicode[randomDie3 - 1];
       }, 50);
       
-      // 1秒後にアニメーションを停止し、最終的な結果を表示
+      // 設定した速度に応じてアニメーションを停止し、最終的な結果を表示
       setTimeout(function() {
         clearInterval(animationInterval);
         // アニメーション用クラスを除去
@@ -154,23 +427,100 @@
         die2Elem.textContent = diceUnicode[finalDie2 - 1];
         die3Elem.textContent = diceUnicode[finalDie3 - 1];
         
+        // 結果の役を判定
+        const yaku = evaluateYaku(finalDie1, finalDie2, finalDie3);
+        
+        // 得点を更新
+        currentScore += yaku.score;
+        document.getElementById('currentScore').textContent = currentScore + ' 点';
+        
+        // 最高得点を更新
+        if (currentScore > highScore) {
+          highScore = currentScore;
+          document.getElementById('highScore').textContent = highScore + ' 点';
+          localStorage.setItem('chinchiroHighScore', highScore);
+          
+          // 最高得点更新時にアニメーション
+          document.getElementById('highScore').classList.add('highlight');
+          setTimeout(() => {
+            document.getElementById('highScore').classList.remove('highlight');
+          }, 500);
+        }
+        
+        // 役名を表示
+        yakuNameElem.textContent = yaku.name;
+        
         // 最終結果の文字列を作成
         var finalDiceResult = diceUnicode[finalDie1 - 1] + " " +
                               diceUnicode[finalDie2 - 1] + " " +
                               diceUnicode[finalDie3 - 1];
                               
-        // 結果欄に最終結果を表示
-        resultElem.textContent = finalDiceResult;
+        // 結果欄に役と点数を表示
+        resultElem.textContent = `${finalDiceResult} (${yaku.score > 0 ? '+' + yaku.score : yaku.score} 点)`;
+        
+        // 得点によって効果音を再生
+        setTimeout(() => {
+          let resultSound;
+          if (yaku.score >= 3) {
+            resultSound = new Audio('win.mp3');
+          } else if (yaku.score > 0) {
+            resultSound = new Audio('good.mp3');
+          } else if (yaku.score < 0) {
+            resultSound = new Audio('bad.mp3');
+          } else {
+            resultSound = new Audio('normal.mp3');
+          }
+          resultSound.volume = volume;
+          resultSound.play();
+        }, 300);
         
         // 履歴に今回の結果を記録（最新が上に表示）
         var historyItem = document.createElement("li");
-        historyItem.textContent = finalDiceResult;
+        
+        // 日時の要素
+        var dateSpan = document.createElement("span");
+        var now = new Date();
+        var timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                         now.getMinutes().toString().padStart(2, '0');
+        dateSpan.textContent = timeString;
+        
+        // 結果の要素
+        var resultSpan = document.createElement("span");
+        resultSpan.textContent = `${finalDiceResult} - ${yaku.name} (${yaku.score > 0 ? '+' + yaku.score : yaku.score}点)`;
+        
+        // 要素を追加
+        historyItem.appendChild(resultSpan);
+        historyItem.appendChild(dateSpan);
+        
         historyElem.insertBefore(historyItem, historyElem.firstChild);
+        
+        // 10個以上の履歴があれば古いものを削除
+        if (historyElem.children.length > 10) {
+          historyElem.removeChild(historyElem.lastChild);
+        }
         
         // ボタンを再度有効化
         button.disabled = false;
-      }, 1000);  // 1秒後に最終結果を確定
+      }, rollSpeed);  // 設定された速度で最終結果を確定
     }
+    
+    // ゲームリセット
+    function resetGame() {
+      if (confirm('得点をリセットしますか？')) {
+        currentScore = 0;
+        document.getElementById('currentScore').textContent = '0 点';
+        
+        // リセット音を再生
+        var resetSound = new Audio('reset.mp3');
+        resetSound.volume = volume;
+        resetSound.play();
+      }
+    }
+    
+    // ページロード時に実行
+    window.onload = function() {
+      loadDataFromStorage();
+    };
   </script>
 </body>
 </html>
