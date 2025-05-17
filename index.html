@@ -282,8 +282,8 @@
           <td>-2点</td>
         </tr>
         <tr>
-          <td>役なし（目）</td>
-          <td>同じ目が2つ</td>
+          <td>目（ゾロ目以外の同じ目2つ）</td>
+          <td>ゾロ目以外の同じ目が2つ</td>
           <td>その目の点数</td>
         </tr>
         <tr>
@@ -294,6 +294,7 @@
       </tbody>
     </table>
   </div>
+<script src="evaluateYaku.js"></script>
   
   <script>
     // 変数の初期化
@@ -332,44 +333,6 @@
       localStorage.setItem('chinchiroSpeed', rollSpeed);
     });
     
-    // 役の判定と点数計算
-    function evaluateYaku(die1, die2, die3) {
-      // 出目を昇順にソート
-      let sortedDice = [die1, die2, die3].sort((a, b) => a - b);
-      
-      // ピンゾロ (1-1-1)
-      if (die1 === 1 && die2 === 1 && die3 === 1) {
-        return { name: "ピンゾロ", score: 5 };
-      }
-      
-      // アラシ (同じ目が3つ、ピンゾロ以外)
-      if (die1 === die2 && die2 === die3) {
-        return { name: `アラシ (${die1})`, score: 3 };
-      }
-      
-      // シゴロ (4-5-6)
-      if (sortedDice[0] === 4 && sortedDice[1] === 5 && sortedDice[2] === 6) {
-        return { name: "シゴロ", score: 2 };
-      }
-      
-      // ヒフミ (1-2-3)
-      if (sortedDice[0] === 1 && sortedDice[1] === 2 && sortedDice[2] === 3) {
-        return { name: "ヒフミ", score: -2 };
-      }
-      
-      // 目（同じ目が2つ）
-      if (die1 === die2 || die2 === die3 || die1 === die3) {
-        let pairValue;
-        if (die1 === die2) pairValue = die1;
-        else if (die2 === die3) pairValue = die2;
-        else pairValue = die1;
-        
-        return { name: `目 (${pairValue})`, score: pairValue };
-      }
-      
-      // 役なし
-      return { name: "役なし", score: 0 };
-    }
     
     function rollDice() {
       // サイコロを転がす音を再生
